@@ -30,6 +30,7 @@ TOOLS=(
     "ps:ps from procps"
     "top:procps-ng"
     "etcdctl:etcdctl version"
+    "kubectl:Client Version"
 )
 
 FAILED=0
