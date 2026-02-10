@@ -1,5 +1,5 @@
 .git
 .gitignore
-*.md
-test-tools.sh
 .github
+README.md
+LICENSE

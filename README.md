@@ -2,6 +2,10 @@
 
 A comprehensive Docker image based on Ubuntu 24.04 with networking, debugging, and Kubernetes tools for troubleshooting and system administration.
 
+## Security Notice
+
+This image is built with SSL certificate validation bypassed for certain downloads (yq, kubectl, etcdctl) to handle SSL inspection in some build environments. While this allows the image to build in restricted networks, users should be aware of this and ensure they're downloading the image from trusted sources. For production use, consider rebuilding the image in your own secure environment with proper SSL certificates configured.
+
 ## Tools Included
 
 ### Networking Tools
@@ -40,6 +44,10 @@ A comprehensive Docker image based on Ubuntu 24.04 with networking, debugging, a
     ```bash
     install-kubectl
     ```
+
+### Helper Scripts
+- **test-tools** - Verify all required tools are installed and working
+- **install-kubectl** - Install kubectl if not present
 
 ## Usage
 
@@ -122,6 +130,12 @@ echo '{"name":"test","value":123}' | jq '.'
 
 # Process YAML
 echo 'name: test' | yq eval '.'
+```
+
+### Tool Verification
+```bash
+# Verify all tools are installed and working
+test-tools
 ```
 
 ## License

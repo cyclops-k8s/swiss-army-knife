@@ -34,7 +34,8 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install yq (YAML processor)
-# Note: Using --no-check-certificate due to potential SSL inspection in build environment
+# Note: Using --no-check-certificate to handle SSL inspection in some build environments
+# WARNING: This bypasses SSL validation. In production, use proper certificates.
 RUN wget --no-check-certificate -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 && \
     chmod +x /usr/local/bin/yq
 
@@ -42,8 +43,13 @@ RUN wget --no-check-certificate -qO /usr/local/bin/yq https://github.com/mikefar
 COPY install-kubectl.sh /usr/local/bin/install-kubectl
 RUN chmod +x /usr/local/bin/install-kubectl
 
+# Copy tool verification script
+COPY test-tools.sh /usr/local/bin/test-tools
+RUN chmod +x /usr/local/bin/test-tools
+
 # Install kubectl (using a fixed stable version with retries)
-# Note: Using --insecure due to potential SSL inspection in build environment
+# Note: Using -k (insecure) to handle SSL inspection in some build environments
+# WARNING: This bypasses SSL validation. In production, use proper certificates.
 RUN KUBECTL_VERSION=v1.31.4 && \
     for i in 1 2 3; do \
         curl -Lk --retry 3 --retry-delay 2 -o /usr/local/bin/kubectl https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl && break || sleep 5; \
@@ -51,7 +57,8 @@ RUN KUBECTL_VERSION=v1.31.4 && \
     if [ -f /usr/local/bin/kubectl ]; then chmod +x /usr/local/bin/kubectl; fi || echo "kubectl installation skipped due to network issues"
 
 # Install etcdctl (using a fixed stable version with retries)
-# Note: Using --no-check-certificate due to potential SSL inspection in build environment
+# Note: Using --no-check-certificate to handle SSL inspection in some build environments
+# WARNING: This bypasses SSL validation. In production, use proper certificates.
 RUN ETCD_VER=v3.5.17 && \
     for i in 1 2 3; do \
         wget --no-check-certificate https://github.com/etcd-io/etcd/releases/download/${ETCD_VER}/etcd-${ETCD_VER}-linux-amd64.tar.gz && break || sleep 5; \

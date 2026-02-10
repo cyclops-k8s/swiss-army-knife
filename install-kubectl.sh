@@ -1,6 +1,9 @@
 #!/bin/bash
 # Script to install kubectl if it's not already installed
 # This can be run after the container starts if network issues prevented installation during build
+#
+# SECURITY WARNING: This script uses -k (insecure) flag with curl to handle SSL inspection
+# in some environments. In production, ensure proper SSL certificates are configured.
 
 set -e
 
