@@ -1,66 +1,29 @@
 name: Build and Push Docker Image
 
 on:
+  pull_request:
+    branches:
+    - main
   push:
     branches:
-      - main
+    - main
   schedule:
-    # Run every Sunday at 00:00 UTC (weekly rebuild)
-    - cron: '0 0 * * 0'
+  - cron: '0 0 * * 0'
   workflow_dispatch:
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      packages: write
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Check last commit date and create keepalive commit if needed
-        id: keepalive
-        run: |
-          # Get the date of the last commit in seconds since epoch
-          LAST_COMMIT_DATE=$(git log -1 --format=%ct)
-          CURRENT_DATE=$(date +%s)
-          
-          # Calculate the difference in days
-          DAYS_SINCE_COMMIT=$(( (CURRENT_DATE - LAST_COMMIT_DATE) / 86400 ))
-          
-          echo "Days since last commit: $DAYS_SINCE_COMMIT"
-          
-          if [ $DAYS_SINCE_COMMIT -gt 30 ]; then
-            echo "Last commit was more than 30 days ago. Creating keepalive commit."
-            
-            # Configure git
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            
-            # Create a keepalive file with timestamp
-            echo "Keepalive: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" > .keepalive
-            git add .keepalive
-            git commit -m "chore: keepalive commit for workflow"
-            git push
-            
-            echo "keepalive_changed=true" >> $GITHUB_OUTPUT
-          else
-            echo "Last commit was within 30 days. No keepalive needed."
-            echo "keepalive_changed=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Re-checkout repository if keepalive was changed
-        if: steps.keepalive.outputs.keepalive_changed == 'true'
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Log in to Quay.io
+        if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
         uses: docker/login-action@v3
         with:
           registry: quay.io
@@ -68,34 +31,37 @@ jobs:
           password: ${{ secrets.QUAY_PASSWORD }}
 
       - name: Extract metadata
-        id: meta
+        id: meta-heavy
         uses: docker/metadata-action@v5
         with:
           images: quay.io/cyclops-k8s/swiss-army-knife
           tags: |
-            type=raw,value=latest
+            type=raw,value=heavy-latest
             type=sha,prefix=sha-
             type=schedule,pattern={{date 'YYYYMMDD'}}
-
-      - name: Should we push
-        id: should-push
-        run: |
-          if [ "${{ github.event_name }}" == "push" ] && [ "${{ github.ref }}" == "refs/heads/main" ]; then
-            echo "push_image=true" >> $GITHUB_OUTPUT
-          elif [ "${{ github.event_name }}" == "schedule" ]; then
-            echo "push_image=true" >> $GITHUB_OUTPUT
-          elif [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            echo "push_image=true" >> $GITHUB_OUTPUT
-          else
-            echo "push_image=false" >> $GITHUB_OUTPUT
-          fi
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
-          push: ${{ steps.should-push.outputs.push_image == 'true' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=quay.io/cyclops-k8s/swiss-army-knife:latest
-          cache-to: type=inline
+          push: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
+          tags: ${{ steps.meta-heavy.outputs.tags }}
+          labels: ${{ steps.meta-heavy.outputs.labels }}
+
+      - name: Extract metadata
+        id: meta-lite
+        uses: docker/metadata-action@v5
+        with:
+          images: quay.io/cyclops-k8s/swiss-army-knife
+          tags: |
+            type=raw,value=lite-latest
+            type=sha,prefix=sha-
+            type=schedule,pattern=lite-{{date 'YYYYMMDD'}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
+          tags: ${{ steps.meta-lite.outputs.tags }}
+          labels: ${{ steps.meta-lite.outputs.labels }}

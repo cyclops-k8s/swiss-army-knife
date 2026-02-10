@@ -9,12 +9,16 @@ RUN apt-get update && \
         curl \
         dnsutils \
         ethtool \
+        etcd-client \
+        ifstat \
+        iftop \
         iperf \
         iperf3 \
         iproute2 \
         ipset \
         iptables \
         iputils-ping \
+        iputils-tracepath \
         jq \
         kmod \
         ldap-utils \
