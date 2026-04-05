@@ -13,7 +13,8 @@ on:
 
 jobs:
   build-and-push:
-    runs-on: ubuntu-latest
+    runs-on:
+      group: Default
     
     steps:
       - name: Checkout repository
@@ -44,9 +45,10 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: Dockerfile.heavy
+          labels: ${{ steps.meta-heavy.outputs.labels }}
           push: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
           tags: ${{ steps.meta-heavy.outputs.tags }}
-          labels: ${{ steps.meta-heavy.outputs.labels }}
 
       - name: Extract metadata
         id: meta-lite
@@ -62,6 +64,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: Dockerfile.lite
+          labels: ${{ steps.meta-lite.outputs.labels }}
           push: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
           tags: ${{ steps.meta-lite.outputs.tags }}
-          labels: ${{ steps.meta-lite.outputs.labels }}
