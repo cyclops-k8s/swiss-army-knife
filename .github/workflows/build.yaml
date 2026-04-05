@@ -31,17 +31,17 @@ jobs:
           username: ${{ secrets.QUAY_USERNAME }}
           password: ${{ secrets.QUAY_PASSWORD }}
 
-      - name: Extract metadata
+      - name: Heavy - Extract metadata
         id: meta-heavy
         uses: docker/metadata-action@v5
         with:
           images: quay.io/cyclops-k8s/swiss-army-knife
           tags: |
             type=raw,value=heavy-latest
-            type=sha,prefix=sha-
-            type=schedule,pattern={{date 'YYYYMMDD'}}
+            type=sha,prefix=heavy-sha-
+            type=schedule,pattern=heavy-{{date 'YYYYMMDD'}}
 
-      - name: Build and push Docker image
+      - name: Heavy - Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -50,17 +50,17 @@ jobs:
           push: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
           tags: ${{ steps.meta-heavy.outputs.tags }}
 
-      - name: Extract metadata
+      - name: Lite - Extract metadata
         id: meta-lite
         uses: docker/metadata-action@v5
         with:
           images: quay.io/cyclops-k8s/swiss-army-knife
           tags: |
             type=raw,value=lite-latest
-            type=sha,prefix=sha-
+            type=sha,prefix=lite-sha-
             type=schedule,pattern=lite-{{date 'YYYYMMDD'}}
 
-      - name: Build and push Docker image
+      - name: Lite - Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
