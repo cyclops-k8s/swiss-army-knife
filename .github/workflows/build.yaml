@@ -18,14 +18,14 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Log in to Quay.io
         if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
-        uses: docker/login-action@v3
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
           registry: quay.io
           username: ${{ secrets.QUAY_USERNAME }}
@@ -33,7 +33,7 @@ jobs:
 
       - name: Heavy - Extract metadata
         id: meta-heavy
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6.0.0
         with:
           images: quay.io/cyclops-k8s/swiss-army-knife
           tags: |
@@ -42,7 +42,7 @@ jobs:
             type=schedule,pattern=heavy-{{date 'YYYYMMDD'}}
 
       - name: Heavy - Build and push Docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
         with:
           context: .
           file: Dockerfile.heavy
@@ -52,7 +52,7 @@ jobs:
 
       - name: Lite - Extract metadata
         id: meta-lite
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6.0.0
         with:
           images: quay.io/cyclops-k8s/swiss-army-knife
           tags: |
@@ -61,7 +61,7 @@ jobs:
             type=schedule,pattern=lite-{{date 'YYYYMMDD'}}
 
       - name: Lite - Build and push Docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
         with:
           context: .
           file: Dockerfile.lite
